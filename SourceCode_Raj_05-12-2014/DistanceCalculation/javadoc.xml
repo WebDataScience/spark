@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<project default="javadoc">
+    <target name="javadoc">
+        <javadoc access="public" author="true" classpath="/opt/spark/spark-0.9/assembly/target/scala-2.10/spark-assembly-0.9.0-incubating-hadoop1.0.4.jar:/opt/scala/scala-2.10.4/lib/scala-library.jar" destdir="doc" nodeprecated="false" nodeprecatedlist="false" noindex="false" nonavbar="false" notree="false" source="1.7" sourcefiles="src/ProximityGraph.java,src/TransposeParser.java,src/TransposePreProcessing.java,src/DataParser.java" sourcepath="src" splitindex="true" use="true" version="true"/>
+    </target>
+</project>
