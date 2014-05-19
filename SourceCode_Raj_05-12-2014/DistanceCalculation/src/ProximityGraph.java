@@ -33,8 +33,8 @@ public class ProximityGraph {
 			String sparkHome = args[1];
 			String filePath = args[2];
 			
-			
-			 String matrixPath = TransposePreProcessing
+			//Preprocessing the input data file
+			String matrixPath = TransposePreProcessing
 			  .dataToMatrixConv(filePath);
 			 
 			// Set the spark context
@@ -53,12 +53,13 @@ public class ProximityGraph {
 						@Override
 						public Tuple2<Integer, String[]> call(String[] arg0)
 								throws Exception {
-							// TODO Auto-generated method stub
+
 							int point = Integer.parseInt(arg0[1]);
 							return new Tuple2<Integer, String[]>(point, arg0);
 						}
 
 					});
+			datasetRDD = null;
 
 			// Generate a transpose RDD for the above preprocessed file
 			JavaRDD<String[]> transposeRDD = sc.textFile(matrixPath).map(
@@ -77,36 +78,33 @@ public class ProximityGraph {
 						}
 
 					});
+			transposeRDD = null;
 
 			// Join the original RDD and transpose RDD. Inbuilt method join is
 			// used. It joins the RDD's based on key
 			JavaPairRDD<Integer, Tuple2<String[], String[]>> jointPairs = matrixRDD
 					.join(transposeMatrixRDD);
+			matrixRDD = null;
+			transposeMatrixRDD = null;
 
 			// Perform the first step for calculating the Euclidean distance in
 			// the mapper
-			JavaPairRDD<String, double[]> intermediateRDD = jointPairs
-					.map(new PairFunction<Tuple2<Integer, Tuple2<String[], String[]>>, String, double[]>() {
+			JavaPairRDD<String, Double> intermediateRDD = jointPairs
+					.map(new PairFunction<Tuple2<Integer, Tuple2<String[], String[]>>, String, Double>() {
 
 						@Override
-						public Tuple2<String, double[]> call(
+						public Tuple2<String, Double> call(
 								Tuple2<Integer, Tuple2<String[], String[]>> arg0)
 								throws Exception {
 
-							double[] result = new double[arg0._2._1.length
-									+ arg0._2._2.length];
-							result[0] = Double.parseDouble(arg0._2._1[0]);
-							result[1] = Double.parseDouble(arg0._2._1[1]);
-							result[2] = Double.parseDouble(arg0._2._2[0]);
-							result[3] = Double.parseDouble(arg0._2._2[1]);
 							double i = Double.parseDouble(arg0._2._1[2]);
 							double j = Double.parseDouble(arg0._2._2[2]);
 							double difference = i - j;
-							result[4] = difference * difference;
+							double result = difference * difference;
 							double[] key = new double[2];
-							key[0] = result[0];
-							key[1] = result[3];
-							return new Tuple2<String, double[]>(key[0] + ","
+							key[0] = Double.parseDouble(arg0._2._1[0]);
+							key[1] = Double.parseDouble(arg0._2._2[1]);
+							return new Tuple2<String, Double>(key[0] + ","
 									+ key[1], result);
 
 						}
@@ -115,12 +113,12 @@ public class ProximityGraph {
 
 			// Add all the differences calculated in the mapper based on key
 			intermediateRDD = intermediateRDD
-					.reduceByKey(new Function2<double[], double[], double[]>() {
+					.reduceByKey(new Function2<Double, Double, Double>() {
 
 						@Override
-						public double[] call(double[] arg0, double[] arg1)
+						public Double call(Double arg0, Double arg1)
 								throws Exception {
-							arg0[4] += arg1[4];
+							arg0 += arg1;
 							return arg0;
 						}
 
@@ -128,29 +126,30 @@ public class ProximityGraph {
 
 			// Create another RDD which calculates the Square Root of the
 			// value from previous RDD. This will give the final distance matrix
-			JavaPairRDD<String, double[]> distanceRDD = intermediateRDD
-					.map(new PairFunction<Tuple2<String, double[]>, String, double[]>() {
+			JavaPairRDD<String, Double> distanceRDD = intermediateRDD
+					.map(new PairFunction<Tuple2<String, Double>, String, Double>() {
 
 						@Override
-						public Tuple2<String, double[]> call(
-								Tuple2<String, double[]> arg0) throws Exception {
+						public Tuple2<String, Double> call(
+								Tuple2<String, Double> arg0) throws Exception {
 							String key = arg0._1;
-							arg0._2[4] = Math.sqrt(arg0._2[4]);
-							double[] result = { arg0._2[4] };
-							return new Tuple2<String, double[]>(key, result);
+							double result = Math.sqrt(arg0._2);
+							return new Tuple2<String, Double>(key, result);
 						}
 
 					});
-			// Print the result
+			// Collect the result in a list
 			List distanceRDDList = distanceRDD.collect();
 			System.out.println("Done");
+			//Uncomment to test the correctness of the above job
+			//This will print the result in the console.
 			/*Iterator iterator = distanceRDDList.iterator();
 			System.out.println("Distance RDD after Reduce");
 			while (iterator.hasNext()) {
-				Tuple2<String, double[]> tuple = (Tuple2<String, double[]>) iterator
+				Tuple2<String, Double> tuple = (Tuple2<String, Double>) iterator
 						.next();
-				double[] r = tuple._2;
-				System.out.println(tuple._1 + ":" + r[0]);
+				double r = tuple._2;
+				System.out.println(tuple._1 + ":" + r);
 			}*/
 		} catch (Exception e) {
 			System.out.println(e);
