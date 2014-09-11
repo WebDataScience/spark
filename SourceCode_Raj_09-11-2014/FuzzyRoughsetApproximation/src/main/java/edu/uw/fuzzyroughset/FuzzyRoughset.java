@@ -220,8 +220,12 @@ public class FuzzyRoughset {
 			public ArrayList<String> call(ArrayList<String> arg0,
 					ArrayList<String> arg1) throws Exception {
 				String result = "";
+				String[] args0 = new String[2];
+				String[] args1 = new String[2];
 				for(int i = 0;i<arg0.size();i++) {
-					result = ""+(Math.max(Double.parseDouble(arg0.get(i)), Double.parseDouble(arg1.get(i))));
+					 args0 = arg0.get(i).split(",");
+					 args1 = arg1.get(i).split(",");
+					result = ""+(Math.max(Double.parseDouble(args0[0]), Double.parseDouble(args1[0])))+","+(Math.min(Double.parseDouble(args0[1]), Double.parseDouble(args1[1])));
 					arg0.set(i, result);
 				}
 				return arg0;

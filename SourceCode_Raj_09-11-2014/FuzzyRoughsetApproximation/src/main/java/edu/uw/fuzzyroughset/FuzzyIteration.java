@@ -65,17 +65,19 @@ public class FuzzyIteration extends ParallelIteration{
 		double[] rangeVs = (double[]) arg.get("Ranges");
 		double[] row1 = parseLine(row, rangeVs);
 		double[] row2 = new double[row1.length];
-		double maxs = 0;
-		double min = 1;
+		double maxs = 0, mins = 1;
+		double min = 1, max = 0;
 		double simVal = -1;
 		String temp = "";
 		for(int i = start; i < end; i++) {
 			row2 = inMemoryRows.get(i);
 			simVal = getSimilarity(row1, row2, rangeVs);
 			min = Math.min(simVal, row2[row2.length-1]);
+			max = Math.max((1-simVal), row2[row2.length-1]);
 			maxs = Math.max(maxs, min);
+			mins = Math.min(max, mins);
 		}
-		return ""+maxs;
+		return ""+maxs+","+mins;
 	}
 
 }
